@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Guardify</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: black;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: #00ff00;
+            flex-direction: column;
+        }
+
+        .matrix {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: black;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .matrix span {
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-size: 20px;
+            font-family: monospace;
+            color: #00ff00;
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100%);
+            }
+            100% {
+                transform: translateY(100%);
+            }
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .form-container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
+            width: 300px;
+            position: relative;
+        }
+
+        .form-container::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+            z-index: -1;
+            border-radius: 15px;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .form-container:hover::before {
+            opacity: 1;
+        }
+
+        .form-container::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            border: 2px solid white;
+            border-radius: 15px;
+            animation: rotate 5s linear infinite;
+            z-index: -2;
+            opacity: 1;
+        }
+
+        .form-container:hover::after {
+            border-color: #00ff00;
+        }
+
+        .form-container h1 {
+            color: #00ff00;
+            margin-bottom: 20px;
+        }
+
+        .form-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            outline: none;
+            background: rgba(0, 0, 0, 0.5);
+            color: #00ff00;
+        }
+
+        .form-container button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background: #00ff00;
+            color: #000;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .form-container button:hover {
+            background: #00cc00;
+        }
+
+        .form-container p {
+            color: #00ff00;
+        }
+
+        .form-container a {
+            color: #00ff00;
+            text-decoration: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .lights {
+            position: absolute;
+            top: -15px;
+            left: -15px;
+            right: -15px;
+            bottom: -15px;
+            border-radius: 15px;
+            border: 2px solid transparent;
+            box-shadow: 0 0 10px 2px #00ff00;
+            animation: rotate 5s linear infinite;
+            z-index: -3;
+            opacity: 1;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .form-container:hover .lights {
+            box-shadow: 0 0 20px 4px #00ff00;
+        }
+
+        .logo {
+            width: 100px; /* Adjust the width as needed */
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="matrix"></div>
+    <div class="container">
+        <img src="{{ url_for('static', filename='logo g.png') }}" alt="Guardify Logo" class="logo">
+        <h1>Guardify Sign Up</h1>
+        <div class="form-container">
+            <div class="lights"></div>
+            <form action="{{ url_for('register') }}" method="post">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Sign Up</button>
+            </form>
+            <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const matrix = document.querySelector('.matrix');
+            const matrixWidth = window.innerWidth;
+            const matrixHeight = window.innerHeight;
+            const columns = Math.floor(matrixWidth / 20);
+            const drops = [];
+
+            for (let i = 0; i < columns; i++) {
+                drops[i] = Math.random() * matrixHeight;
+            }
+
+            function drawMatrix() {
+                matrix.innerHTML = '';
+                for (let i = 0; i < drops.length; i++) {
+                    const text = document.createElement('span');
+                    text.innerHTML = Math.random() > 0.5 ? '1' : '0';
+                    text.style.left = `${i * 20}px`;
+                    text.style.top = `${drops[i]}px`;
+                    matrix.acyberdefence.jpgppendChild(text);
+                    drops[i] += 20;
+                    if (drops[i] > matrixHeight) {
+                        drops[i] = 0;
+                    }
+                }
+            }
+
+            setInterval(drawMatrix, 50);
+        });
+    </script>
+</body>
+</html>

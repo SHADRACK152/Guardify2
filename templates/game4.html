@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Cracker</title>
+    <style>
+        body {
+            font-family: "Courier New", Courier, monospace;
+            background: #1b263b;
+            color: #00ff00;
+            text-align: center;
+            padding: 20px;
+            overflow: hidden; /* Prevent scrollbars when virus moves */
+        }
+
+        .game-container {
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+            background: #0d1b2a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: left;
+        }
+
+        .input-container {
+            margin-bottom: 20px;
+        }
+
+        .input-container input {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 18px;
+            padding: 10px;
+            width: 80%;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+            background: #1b263b;
+            color: #00ff00;
+        }
+
+        .input-container button {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 18px;
+            padding: 10px 20px;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+            background: #00ff00;
+            color: #1b263b;
+            cursor: pointer;
+        }
+
+        .input-container button:hover {
+            background: #1b263b;
+            color: #00ff00;
+        }
+
+        .feedback {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        .virus {
+            font-size: 50px;
+            color: #ff0000;
+            position: absolute;
+            animation: flicker 0.2s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .back-link {
+            color: #00ff00;
+            text-decoration: none;
+            margin-top: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Password Cracker</h1>
+    <div class="game-container">
+        <div class="input-container">
+            <input type="text" id="user-password" maxlength="20" placeholder="Create your password">
+            <button onclick="evaluatePassword()">Submit</button>
+        </div>
+        <div class="feedback" id="feedback"></div>
+        <div id="virus-container" style="position: relative; height: 400px; overflow: hidden;"></div>
+    </div>
+    <a href="{{ url_for('games') }}" class="back-link">Back to Games</a>
+
+    <script>
+        function evaluatePassword() {
+            const password = document.getElementById("user-password").value;
+            const feedback = document.getElementById("feedback");
+            const virusContainer = document.getElementById("virus-container");
+
+            if (isWeakPassword(password)) {
+                feedback.textContent = "Weak password! The cracker broke your password!";
+                feedback.style.color = "#ff0000";
+                showVirusEffect();
+            } else {
+                feedback.textContent = "Strong password! The cracker was not successful.";
+                feedback.style.color = "#00ff00";
+            }
+        }
+
+        function isWeakPassword(password) {
+            // A strong password must meet all these criteria:
+            const minLength = password.length >= 8;
+            const hasUppercase = /[A-Z]/.test(password);
+            const hasLowercase = /[a-z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+            // If any of these conditions are not met, the password is weak
+            return !(minLength && hasUppercase && hasLowercase && hasNumber && hasSpecialChar);
+        }
+
+        function showVirusEffect() {
+            const virusContainer = document.getElementById("virus-container");
+            virusContainer.style.display = "block";
+            virusContainer.innerHTML = ""; // Clear previous content
+
+            // Create multiple "VIRUS" elements
+            for (let i = 0; i < 20; i++) {
+                const virus = document.createElement("div");
+                virus.textContent = "VIRUS";
+                virus.classList.add("virus");
+                virus.style.top = `${Math.random() * 100}%`;
+                virus.style.left = `${Math.random() * 100}%`;
+                virusContainer.appendChild(virus);
+            }
+
+            // Move the "VIRUS" elements randomly for 5 seconds
+            const viruses = document.querySelectorAll(".virus");
+            const interval = setInterval(() => {
+                viruses.forEach(virus => {
+                    virus.style.top = `${Math.random() * 100}%`;
+                    virus.style.left = `${Math.random() * 100}%`;
+                });
+            }, 200);
+
+            // Stop the movement and clear the viruses after 5 seconds
+            setTimeout(() => {
+                clearInterval(interval);
+                virusContainer.innerHTML = ""; // Remove all "VIRUS" elements
+                virusContainer.style.display = "none"; // Hide the container
+                const feedback = document.getElementById("feedback");
+                feedback.textContent = "Try again with a stronger password!";
+                feedback.style.color = "#ff0000";
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

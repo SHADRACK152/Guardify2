@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Quiz</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1b263b;
+            color: #00ff00;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #0d1b2a;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.7);
+            position: relative;
+        }
+
+        .question {
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+
+        .options {
+            list-style: none;
+            padding: 0;
+        }
+
+        .options li {
+            margin-bottom: 15px;
+        }
+
+        .options button {
+            background: #00ff00;
+            color: #0d1b2a;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .options button:hover {
+            background: #1b263b;
+            color: #00ff00;
+        }
+
+        .feedback {
+            font-size: 18px;
+            margin-top: 20px;
+        }
+
+        .timer {
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .score {
+            font-size: 24px;
+            margin-top: 30px;
+        }
+
+        .review-container {
+            margin-top: 20px;
+            background: #0d1b2a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 15px;
+            display: none; /* Initially hidden */
+        }
+
+        .review-container.open {
+            display: block; /* Show when toggled */
+        }
+
+        .review-header {
+            font-size: 20px;
+            margin-bottom: 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .review-item {
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .review-item.correct {
+            color: #00ff00;
+        }
+
+        .review-item.incorrect {
+            color: #ff0000;
+        }
+
+        .toggle-review {
+            background: #00ff00;
+            color: #0d1b2a;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .back-link, .restart-button {
+            color: #00ff00;
+            text-decoration: none;
+            margin-top: 20px;
+            display: inline-block;
+            font-size: 18px;
+            padding: 10px 20px;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+        }
+
+        .back-link:hover, .restart-button:hover {
+            background: #00ff00;
+            color: #0d1b2a;
+        }
+
+        /* Flicker effect for incorrect answers */
+        @keyframes flicker {
+            0% { background-color: #ff0000; }
+            50% { background-color: #1b263b; }
+            100% { background-color: #ff0000; }
+        }
+
+        .flicker {
+            animation: flicker 0.2s 3; /* Flicker 3 times */
+        }
+    </style>
+</head>
+<body>
+    <h1>Security Quiz</h1>
+    <div class="quiz-container">
+        <div id="quiz">
+            <div class="timer" id="timer">Time left: 10s</div>
+            <div class="question" id="question">Question will appear here</div>
+            <ul class="options" id="options">
+                <!-- Options will be dynamically added here -->
+            </ul>
+            <div class="feedback" id="feedback"></div>
+        </div>
+        <div class="score hidden" id="score">
+            Your score: <span id="score-value"></span>
+            <br>
+            <button class="restart-button" onclick="restartQuiz()">Restart Quiz</button>
+        </div>
+        <a href="{{ url_for('games') }}" class="back-link">Back to Games</a>
+
+        <!-- Review Container -->
+        <div class="review-container" id="review-container">
+            <div class="review-header" onclick="toggleReview()">Review Answers ▼</div>
+            <div id="review-list">
+                <!-- Review items will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const questions = [
+        { question: "What does HTTPS stand for?", options: ["HyperText Transfer Protocol Secure", "HyperText Transfer Protocol Standard", "High Transfer Protocol Secure", "Hyper Transfer Protocol Secure"], answer: 0 },
+        { question: "Which of the following is a strong password?", options: ["123456", "password", "P@ssw0rd!", "qwerty"], answer: 2 },
+        { question: "What is phishing?", options: ["A type of malware", "An attempt to steal sensitive information", "A secure communication protocol", "A type of firewall"], answer: 1 },
+        { question: "What does a firewall do?", options: ["Encrypts data", "Prevents unauthorized access", "Detects malware", "Manages network traffic"], answer: 1 },
+        { question: "What is two-factor authentication?", options: ["Using two passwords", "Using two methods to verify identity", "Using two devices", "Using two accounts"], answer: 1 },
+        { question: "What is ransomware?", options: ["A type of malware that encrypts files", "A type of phishing attack", "A secure protocol", "A type of firewall"], answer: 0 },
+        { question: "Which of the following is a social engineering attack?", options: ["Phishing", "DDoS", "SQL Injection", "Man-in-the-middle"], answer: 0 },
+        { question: "What is the purpose of encryption?", options: ["To secure data by making it unreadable without a key", "To delete sensitive data", "To compress files", "To detect malware"], answer: 0 },
+        { question: "What is a VPN used for?", options: ["Encrypting internet traffic", "Detecting malware", "Blocking ads", "Managing passwords"], answer: 0 },
+        { question: "What is the primary goal of a DDoS attack?", options: ["To overload a system and make it unavailable", "To steal sensitive data", "To encrypt files", "To gain unauthorized access"], answer: 0 },
+        { question: "What is a brute force attack?", options: ["Trying all possible password combinations", "Intercepting network traffic", "Exploiting software vulnerabilities", "Sending phishing emails"], answer: 0 },
+        { question: "What is the purpose of a CAPTCHA?", options: ["To verify that a user is human", "To encrypt sensitive data", "To block malware", "To detect phishing attempts"], answer: 0 },
+        { question: "What is the role of an antivirus program?", options: ["To detect and remove malware", "To encrypt files", "To manage passwords", "To block phishing emails"], answer: 0 },
+        { question: "What is the main purpose of a security patch?", options: ["To fix vulnerabilities in software", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 },
+        { question: "What is the principle of least privilege?", options: ["Giving users only the access they need", "Allowing all users full access", "Encrypting sensitive data", "Blocking unauthorized access"], answer: 0 },
+        { question: "What is a zero-day vulnerability?", options: ["A vulnerability that is exploited before it is patched", "A vulnerability that is patched immediately", "A type of phishing attack", "A type of malware"], answer: 0 },
+        { question: "What is the purpose of a digital certificate?", options: ["To verify the identity of a website or user", "To encrypt sensitive data", "To block malware", "To manage passwords"], answer: 0 },
+        { question: "What is the purpose of a honeypot in cybersecurity?", options: ["To lure attackers and study their behavior", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 },
+        { question: "What is the purpose of multi-factor authentication?", options: ["To add an extra layer of security", "To encrypt sensitive data", "To block malware", "To manage passwords"], answer: 0 },
+        { question: "What is the purpose of a penetration test?", options: ["To identify vulnerabilities in a system", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 },
+        { question: "What is SQL injection?", options: ["A code injection technique", "A type of phishing attack", "A secure protocol", "A type of malware"], answer: 0 },
+        { question: "What is the purpose of a firewall?", options: ["To block unauthorized access", "To encrypt data", "To manage passwords", "To detect malware"], answer: 0 },
+        { question: "What is the purpose of a security audit?", options: ["To assess the security of a system", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 },
+        { question: "What is the purpose of a password manager?", options: ["To securely store and manage passwords", "To encrypt sensitive data", "To block malware", "To manage network traffic"], answer: 0 },
+        { question: "What is the purpose of a phishing simulation?", options: ["To train users to recognize phishing attacks", "To encrypt sensitive data", "To block malware", "To manage passwords"], answer: 0 },
+        { question: "What is the purpose of a vulnerability scan?", options: ["To identify weaknesses in a system", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 },
+        { question: "What is the purpose of a security policy?", options: ["To define rules and guidelines for security", "To encrypt sensitive data", "To block malware", "To manage passwords"], answer: 0 },
+        { question: "What is the purpose of a security awareness program?", options: ["To educate users about security risks", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 },
+        { question: "What is the purpose of a security incident response plan?", options: ["To respond to and mitigate security incidents", "To encrypt sensitive data", "To block malware", "To manage passwords"], answer: 0 },
+        { question: "What is the purpose of a security operations center (SOC)?", options: ["To monitor and respond to security threats", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 },
+        { question: "What is the purpose of a security information and event management (SIEM) system?", options: ["To collect and analyze security data", "To encrypt sensitive data", "To block malware", "To manage passwords"], answer: 0 },
+        { question: "What is the purpose of a security perimeter?", options: ["To define the boundary of a secure network", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 },
+        { question: "What is the purpose of a security token?", options: ["To provide secure access to resources", "To encrypt sensitive data", "To block malware", "To manage passwords"], answer: 0 },
+        { question: "What is the purpose of a security vulnerability assessment?", options: ["To identify and prioritize vulnerabilities", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 },
+        { question: "What is the purpose of a security vulnerability management program?", options: ["To address and remediate vulnerabilities", "To encrypt sensitive data", "To block malware", "To manage passwords"], answer: 0 },
+        { question: "What is the purpose of a security vulnerability scanner?", options: ["To identify vulnerabilities in a system", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 },
+        { question: "What is the purpose of a security vulnerability testing program?", options: ["To test for vulnerabilities in a system", "To encrypt sensitive data", "To block malware", "To manage passwords"], answer: 0 },
+        { question: "What is the purpose of a security vulnerability tracking system?", options: ["To track and manage vulnerabilities", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 },
+        { question: "What is the purpose of a security vulnerability triage process?", options: ["To prioritize vulnerabilities for remediation", "To encrypt sensitive data", "To block malware", "To manage passwords"], answer: 0 },
+        { question: "What is the purpose of a security vulnerability validation process?", options: ["To validate the existence of vulnerabilities", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 },
+        { question: "What is the purpose of a security vulnerability verification process?", options: ["To verify the remediation of vulnerabilities", "To encrypt sensitive data", "To block malware", "To manage passwords"], answer: 0 },
+        { question: "What is the purpose of a security vulnerability workflow?", options: ["To manage the lifecycle of vulnerabilities", "To encrypt sensitive data", "To block phishing attempts", "To compress files"], answer: 0 }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let timer;
+    const shuffledQuestions = questions.sort(() => Math.random() - 0.5).slice(0, 10);
+    const sessionAnswers = [];
+
+        function loadQuestion() {
+            const questionElement = document.getElementById("question");
+            const optionsElement = document.getElementById("options");
+            const feedbackElement = document.getElementById("feedback");
+            const currentQuestion = shuffledQuestions[currentQuestionIndex];
+
+            questionElement.textContent = currentQuestion.question;
+            optionsElement.innerHTML = "";
+            feedbackElement.textContent = "";
+
+            currentQuestion.options.forEach((option, index) => {
+                const button = document.createElement("button");
+                button.textContent = option;
+                button.onclick = () => checkAnswer(index);
+                optionsElement.appendChild(button);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            let timeLeft = 10;
+            const timerElement = document.getElementById("timer");
+            timerElement.textContent = `Time left: ${timeLeft}s`;
+
+            clearInterval(timer);
+            timer = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = `Time left: ${timeLeft}s`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    showFeedback(false);
+                }
+            }, 1000);
+        }
+
+        function checkAnswer(selectedIndex) {
+            clearInterval(timer);
+            const currentQuestion = shuffledQuestions[currentQuestionIndex];
+            const isCorrect = selectedIndex === currentQuestion.answer;
+
+            sessionAnswers.push({
+                question: currentQuestion.question,
+                userAnswer: currentQuestion.options[selectedIndex],
+                correctAnswer: currentQuestion.options[currentQuestion.answer],
+                isCorrect: isCorrect
+            });
+
+            showFeedback(isCorrect);
+        }
+
+        function showFeedback(isCorrect) {
+            const feedbackElement = document.getElementById("feedback");
+            const questionElement = document.getElementById("question");
+            const currentQuestion = shuffledQuestions[currentQuestionIndex];
+
+            if (isCorrect) {
+                feedbackElement.textContent = "Correct!";
+                score++;
+            } else {
+                feedbackElement.textContent = `Incorrect! The correct answer was: ${currentQuestion.options[currentQuestion.answer]}`;
+                questionElement.classList.add("flicker"); // Add flicker effect
+            }
+
+            currentQuestionIndex++;
+            setTimeout(() => {
+                questionElement.classList.remove("flicker"); // Remove flicker effect after animation
+                if (currentQuestionIndex < shuffledQuestions.length) {
+                    loadQuestion();
+                } else {
+                    showScore();
+                }
+            }, 2000);
+        }
+
+        function showScore() {
+            document.getElementById("quiz").style.display = "none";
+            const scoreElement = document.getElementById("score");
+            scoreElement.style.display = "block";
+            document.getElementById("score-value").textContent = `${score} / ${shuffledQuestions.length}`;
+            populateReview();
+        }
+
+        function populateReview() {
+            const reviewList = document.getElementById("review-list");
+            reviewList.innerHTML = "";
+
+            sessionAnswers.forEach((answer, index) => {
+                const reviewItem = document.createElement("div");
+                reviewItem.classList.add("review-item");
+                reviewItem.classList.add(answer.isCorrect ? "correct" : "incorrect");
+                reviewItem.innerHTML = `
+                    <strong>Q${index + 1}:</strong> ${answer.question}<br>
+                    <strong>Your Answer:</strong> ${answer.userAnswer}<br>
+                    <strong>Correct Answer:</strong> ${answer.correctAnswer}
+                `;
+                reviewList.appendChild(reviewItem);
+            });
+        }
+
+        function toggleReview() {
+            const reviewContainer = document.getElementById("review-container");
+            reviewContainer.classList.toggle("open");
+        }
+
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            sessionAnswers.length = 0;
+            shuffledQuestions.sort(() => Math.random() - 0.5).slice(0, 10);
+            document.getElementById("quiz").style.display = "block";
+            document.getElementById("score").style.display = "none";
+            loadQuestion();
+        }
+
+        // Start the quiz
+        loadQuestion();
+    </script>
+</body>
+</html>

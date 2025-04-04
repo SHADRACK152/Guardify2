@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Notes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #1b263b;
+            color: #00ff00;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background: #0d1b2a;
+            padding: 10px 20px;
+            color: #00ff00;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header .search-bar {
+            display: flex;
+            align-items: center;
+            background: #1b263b;
+            padding: 5px 10px;
+            border-radius: 5px;
+            flex-grow: 1;
+            margin-right: 20px;
+        }
+
+        .header .search-bar input {
+            border: none;
+            background: none;
+            color: #00ff00;
+            outline: none;
+            margin-left: 10px;
+            width: 100%;
+        }
+
+        .header .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .header .user-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .header .user-info .welcome {
+            margin-right: 20px;
+        }
+
+        .header .user-info .notification {
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .sidebar {
+            background: #0d1b2a;
+            width: 200px;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .sidebar .logo {
+            width: 80px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar a {
+            padding: 10px;
+            text-align: center;
+            width: 100%;
+            color: #00ff00;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        .sidebar a:hover {
+            background: #1b263b;
+        }
+
+        .sidebar a i {
+            margin-right: 5px;
+        }
+
+        .container {
+            margin-left: 200px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            height: calc(100vh - 60px); /* Adjust height to fit within the viewport */
+        }
+
+        .notes-list {
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 20px;
+        }
+
+        .note {
+            background: #0d1b2a;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+            padding: 20px;
+            margin: 10px 0;
+            color: #00ff00;
+            cursor: pointer;
+            transition: background 0.3s;
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .note:hover {
+            background: #1b263b;
+        }
+
+        .note .actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .note .actions button {
+            background: none;
+            border: none;
+            color: #00ff00;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .note .icon {
+            margin-right: 10px;
+            font-size: 24px;
+        }
+
+        .note-editor {
+            background: #0d1b2a;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+            padding: 20px;
+            width: 100%;
+            max-width: 900px;
+            display: none;
+            flex-direction: column;
+        }
+
+        .note-editor.active {
+            display: flex;
+        }
+
+        .note-editor textarea {
+            width: 100%;
+            height: 300px;
+            background: #1b263b;
+            color: #00ff00;
+            border: none;
+            outline: none;
+            padding: 10px;
+            border-radius: 5px;
+            resize: none;
+        }
+
+        .note-editor .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .note-editor .actions button {
+            background: #00ff00;
+            color: #0d1b2a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .note-editor .actions button:hover {
+            background: #1b263b;
+            color: #00ff00;
+        }
+
+        .footer {
+            background: #0d1b2a;
+            padding: 10px;
+            text-align: center;
+            color: #00ff00;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+
+        .add-note {
+            background: #00ff00;
+            color: #0d1b2a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .add-note:hover {
+            background: #1b263b;
+            color: #00ff00;
+        }
+
+        .upload-form {
+            background: #0d1b2a;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+            padding: 20px;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 20px;
+        }
+
+        .upload-form input[type="file"] {
+            background: #1b263b;
+            color: #00ff00;
+            border: none;
+            outline: none;
+            padding: 10px;
+            border-radius: 5px;
+            width: 100%;
+        }
+
+        .upload-form button {
+            background: #00ff00;
+            color: #0d1b2a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        .upload-form button:hover {
+            background: #1b263b;
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="user-info">
+            <i class="fas fa-bell notification"></i>
+        </div>
+    </div>
+    <div class="sidebar">
+        <img src="{{ url_for('static', filename='logo g.png') }}" alt="Guardify Logo" class="logo">
+        <a href="{{ url_for('home') }}"><i class="fas fa-home"></i> <span>Home</span></a>
+        <a href="{{ url_for('community') }}"><i class="fas fa-users"></i> <span>Guardify Community</span></a>
+        <a href="{{ url_for('notes') }}"><i class="fas fa-sticky-note"></i> <span>My Notes</span></a>
+        <a href="{{ url_for('games') }}"><i class="fas fa-gamepad"></i> <span>Games</span></a>
+        <a href="{{ url_for('charts') }}"><i class="fas fa-chart-line"></i> <span>Charts</span></a>
+        <a href="{{ url_for('threat_detection') }}"><i class="fas fa-shield-alt"></i> <span>Threat Detection</span></a>
+        <a href="{{ url_for('incident_response') }}"><i class="fas fa-tools"></i> <span>Incident Response</span></a>
+        <a href="{{ url_for('vulnerability_management') }}"><i class="fas fa-bug"></i> <span>Vulnerability Management</span></a>
+        <a href="{{ url_for('guardify_assistant') }}"><img src="{{ url_for('static', filename='images/guardify logo.png') }}" alt="Guardify Assistant Logo" class="icon"> <span>Guardify Assistant</span></a>
+        <a href="#"><i class="fas fa-lock"></i> <span>Create Protection</span></a>
+    </div>
+    <div class="container">
+        <button class="add-note" onclick="addNote()">Add Note</button>
+        <form class="upload-form" action="{{ url_for('upload_note') }}" method="post" enctype="multipart/form-data">
+            <label for="file-upload">Upload Note:</label>
+            <input type="file" id="file-upload" name="file" title="Choose a file to upload" required>
+            <button type="submit">Upload Note</button>
+        </form>
+        <div class="notes-list">
+            {% for note in notes %}
+            <div class="note">
+                <div class="actions">
+                    <button onclick="editNote()">Edit</button>
+                    <button onclick="deleteNote()">Delete</button>
+                </div>
+                <i class="icon {{ get_icon_class(note.filename) }}"></i>
+                <a href="{{ url_for('static', filename='uploads/' ~ note.filename) }}" target="_blank">{{ note.filename }}</a>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="note-editor">
+            <textarea placeholder="Write your note here..."></textarea>
+            <div class="actions">
+                <button onclick="saveNote()">Save</button>
+                <button onclick="cancelEdit()">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        &copy; 2025 Guardify. All rights reserved.
+    </div>
+    <script>
+        function addNote() {
+            document.querySelector('.note-editor').classList.add('active');
+        }
+
+        function editNote() {
+            document.querySelector('.note-editor').classList.add('active');
+        }
+
+        function saveNote() {
+            document.querySelector('.note-editor').classList.remove('active');
+            // Add logic to save the note
+        }
+
+        function cancelEdit() {
+            document.querySelector('.note-editor').classList.remove('active');
+        }
+
+        function deleteNote() {
+            // Add logic to delete the note
+        }
+    </script>
+</body>
+</html>

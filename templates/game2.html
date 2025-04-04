@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Simulator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1b263b;
+            color: #00ff00;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .email-container {
+            background: #ffffff;
+            color: #000000;
+            border: 1px solid #cccccc;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px auto;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            text-align: left;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .email-header {
+            border-bottom: 1px solid #cccccc;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .email-header h2 {
+            margin: 0;
+            font-size: 18px;
+            color: #333333;
+        }
+
+        .email-header p {
+            margin: 5px 0 0;
+            font-size: 14px;
+            color: #666666;
+        }
+
+        .email-body {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #333333;
+        }
+
+        .email-container button {
+            background: #00ff00;
+            color: #0d1b2a;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        .email-container button:hover {
+            background: #1b263b;
+            color: #00ff00;
+        }
+
+        .timer {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 20px;
+            background: #00ff00;
+            margin: 10px auto;
+            border-radius: 5px;
+        }
+
+        .back-link {
+            color: #00ff00;
+            text-decoration: none;
+            margin-top: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <h1>Phishing Simulator</h1>
+    <div class="progress-bar" id="progress-bar"></div>
+    <div class="email-container" id="game-container">
+        <div class="timer" id="timer">Time left: 10s</div>
+        <div class="email-header">
+            <h2 id="email-subject">Loading email...</h2>
+            <p id="email-sender">From: noreply@example.com</p>
+        </div>
+        <div class="email-body" id="email-body">Please wait...</div>
+        <button onclick="checkEmail('phishing')">Phishing</button>
+        <button onclick="checkEmail('legitimate')">Legitimate</button>
+        <button onclick="showHint()">Hint</button>
+    </div>
+    <a href="{{ url_for('games') }}" class="back-link">Back to Games</a>
+
+    <!-- Online Sound Effects -->
+    <audio id="correct-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-61905/zapsplat_multimedia_game_sound_correct_positive_tone_001_62094.mp3"></audio>
+    <audio id="wrong-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-61905/zapsplat_multimedia_game_sound_incorrect_negative_tone_003_62097.mp3"></audio>
+
+    <script>
+        const emails = [
+            {
+                subject: "Urgent: Your account has been compromised!",
+                body: `Dear Customer,
+
+                We have detected unusual activity in your account and suspect it may have been compromised. To protect your account, we have temporarily suspended access. Please click the link below to verify your identity and reset your password:
+
+                http://fakebank.com/reset
+
+                Failure to act within 24 hours may result in permanent suspension of your account. Thank you for your prompt attention to this matter.`,
+                type: "phishing"
+            },
+            {
+                subject: "Your monthly bank statement is ready",
+                body: `Dear Valued Customer,
+
+                Your monthly bank statement for March 2025 is now available. You can securely access your statement by logging into your account at the link below:
+
+                https://securebank.com
+
+                If you have any questions or concerns, please contact our customer service team at support@securebank.com. Thank you for banking with us.`,
+                type: "legitimate"
+            },
+            {
+                subject: "Congratulations! You've won a $1,000 gift card!",
+                body: `Hello,
+
+                We are excited to inform you that you have been selected as the winner of a $1,000 gift card! To claim your prize, please click the link below and provide your shipping details:
+
+                http://scamprizes.com
+
+                Act fast! This offer is only valid for the next 48 hours. Don't miss out on this amazing opportunity!`,
+                type: "phishing"
+            },
+            {
+                subject: "Your package has been shipped",
+                body: `Dear Customer,
+
+                We are pleased to inform you that your package has been shipped and is on its way to you. You can track your package using the link below:
+
+                https://trustedshipping.com/track
+
+                If you have any questions about your order, please contact our support team at support@trustedshipping.com. Thank you for choosing Trusted Shipping!`,
+                type: "legitimate"
+            },
+            {
+                subject: "Verify your account information",
+                body: `Dear User,
+
+                We noticed suspicious activity in your account and need you to verify your account information to ensure your security. Please click the link below to confirm your details:
+
+                http://phishingsite.com
+
+                If you do not verify your account within 48 hours, your account may be locked. We apologize for any inconvenience this may cause and appreciate your cooperation.`,
+                type: "phishing"
+            }
+        ];
+
+        const fakeSenders = [
+            "support@securebank.com",
+            "noreply@trustedshipping.com",
+            "admin@phishingsite.com",
+            "info@scamprizes.com",
+            "alerts@fakebank.com"
+        ];
+
+        let currentEmailIndex = 0;
+        let score = 0;
+        let timer;
+        let timeLeft = 10;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function loadEmail() {
+            const emailData = emails[currentEmailIndex];
+            const randomSender = fakeSenders[Math.floor(Math.random() * fakeSenders.length)];
+            document.getElementById("email-sender").textContent = `From: ${randomSender}`;
+            document.getElementById("email-subject").textContent = emailData.subject;
+            document.getElementById("email-body").textContent = emailData.body;
+            updateProgressBar();
+            resetTimer();
+        }
+
+        function checkEmail(choice) {
+            clearInterval(timer);
+            const emailData = emails[currentEmailIndex];
+            const correctSound = document.getElementById("correct-sound");
+            const wrongSound = document.getElementById("wrong-sound");
+
+            if (choice === emailData.type) {
+                correctSound.play();
+                alert("Correct!");
+                score += timeLeft; // Add remaining time to the score
+            } else {
+                wrongSound.play();
+                alert("Wrong! This email is " + emailData.type + ".");
+                timeLeft -= 3; // Deduct time for wrong answers
+            }
+
+            currentEmailIndex++;
+            if (currentEmailIndex < emails.length) {
+                loadEmail();
+            } else {
+                endGame();
+            }
+        }
+
+        function resetTimer() {
+            timeLeft = 10;
+            document.getElementById("timer").textContent = `Time left: ${timeLeft}s`;
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").textContent = `Time left: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    alert("Time's up! This email is " + emails[currentEmailIndex].type + ".");
+                    currentEmailIndex++;
+                    if (currentEmailIndex < emails.length) {
+                        loadEmail();
+                    } else {
+                        endGame();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateProgressBar() {
+            const progress = ((currentEmailIndex + 1) / emails.length) * 100;
+            document.getElementById("progress-bar").style.width = `${progress}%`;
+        }
+
+        function showHint() {
+            const emailData = emails[currentEmailIndex];
+            if (emailData.type === "phishing") {
+                alert("Hint: Look for suspicious links or urgent language.");
+            } else {
+                alert("Hint: This email looks professional and uses secure links.");
+            }
+        }
+
+        function endGame() {
+            const highScore = localStorage.getItem("highScore") || 0;
+            if (score > highScore) {
+                localStorage.setItem("highScore", score);
+                alert("New High Score!");
+            }
+
+            document.getElementById("game-container").innerHTML = `
+                <h2>Game Over!</h2>
+                <p>Your score: ${score}/${emails.length}</p>
+                <p>High Score: ${localStorage.getItem("highScore")}</p>
+            `;
+        }
+
+        // Shuffle emails and load the first one
+        shuffle(emails);
+        loadEmail();
+    </script>
+</body>
+</html>

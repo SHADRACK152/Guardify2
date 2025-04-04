@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malware Defense</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1b263b;
+            color: #00ff00;
+            text-align: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .game-container {
+            position: relative;
+            width: 80%;
+            height: 500px;
+            margin: 20px auto;
+            background: #0d1b2a;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .malware {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: red;
+            border-radius: 50%;
+            cursor: pointer;
+            animation: moveDown linear;
+        }
+
+        .malware.fast {
+            background: orange;
+        }
+
+        .malware.slow {
+            background: purple;
+        }
+
+        .malware.stealth {
+            background: red;
+            opacity: 0.5;
+        }
+
+        .malware.explosive {
+            background: black;
+        }
+
+        .power-up {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: yellow;
+            border-radius: 50%;
+            cursor: pointer;
+            animation: moveDown linear;
+        }
+
+        .network-core {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 100px;
+            background: #00ff00;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 100px;
+            font-size: 16px;
+            color: #0d1b2a;
+            font-weight: bold;
+        }
+
+        .health-bar {
+            width: 100%;
+            height: 20px;
+            background: green;
+            margin-bottom: 10px;
+        }
+
+        .timer, .score, .level {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .back-link {
+            color: #00ff00;
+            text-decoration: none;
+            margin-top: 20px;
+            display: inline-block;
+        }
+
+        @keyframes moveDown {
+            from {
+                top: -50px;
+            }
+            to {
+                top: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Malware Defense</h1>
+    <div class="health-bar" id="health-bar"></div>
+    <div class="level" id="level">Level: 1</div>
+    <div class="timer" id="timer">Time left: 60s</div>
+    <div class="score" id="score">Score: 0</div>
+    <div class="game-container" id="game-container">
+        <div class="network-core">Core</div>
+    </div>
+    <a href="{{ url_for('games') }}" class="back-link">Back to Games</a>
+
+    <!-- Sound Effects -->
+    <audio id="click-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-61905/zapsplat_multimedia_game_sound_correct_positive_tone_001_62094.mp3"></audio>
+    <audio id="miss-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-61905/zapsplat_multimedia_game_sound_incorrect_negative_tone_003_62097.mp3"></audio>
+    <audio id="powerup-sound" src="https://www.zapsplat.com/wp-content/uploads/2015/sound-effects-61905/zapsplat_multimedia_game_sound_power_up_001_62096.mp3"></audio>
+
+    <script>
+        let score = 0;
+        let timeLeft = 60;
+        let level = 1;
+        let coreHealth = 100;
+        let timer;
+        let malwareInterval;
+        let powerUpInterval;
+
+        function startGame() {
+            startTimer();
+            spawnMalware();
+            spawnPowerUps();
+        }
+
+        function spawnMalware() {
+            malwareInterval = setInterval(() => {
+                const gameContainer = document.getElementById("game-container");
+                const malware = document.createElement("div");
+                malware.classList.add("malware");
+
+                // Randomize position and type
+                const randomLeft = Math.random() * (gameContainer.offsetWidth - 50);
+                malware.style.left = `${randomLeft}px`;
+
+                const randomType = Math.random();
+                if (randomType < 0.2) {
+                    malware.classList.add("fast");
+                    malware.style.animationDuration = "3s"; // Fast malware
+                } else if (randomType < 0.4) {
+                    malware.classList.add("slow");
+                    malware.style.animationDuration = "8s"; // Slow malware
+                } else if (randomType < 0.6) {
+                    malware.classList.add("stealth");
+                    malware.style.opacity = "0.5"; // Stealth malware
+                    setTimeout(() => (malware.style.opacity = "1"), 2000); // Becomes visible after 2 seconds
+                } else if (randomType < 0.8) {
+                    malware.classList.add("explosive");
+                    malware.style.animationDuration = "5s"; // Explosive malware
+                    malware.addEventListener("animationend", () => {
+                        alert("Explosive malware damaged the core!");
+                        updateHealth(20); // Damage core
+                    });
+                } else {
+                    malware.style.animationDuration = "5s"; // Normal malware
+                }
+
+                // Add click event to eliminate malware
+                malware.onclick = () => {
+                    document.getElementById("click-sound").play();
+                    score += 10;
+                    updateScore();
+                    malware.remove();
+                };
+
+                // Remove malware if it reaches the core
+                malware.addEventListener("animationend", () => {
+                    malware.remove();
+                    document.getElementById("miss-sound").play();
+                    updateHealth(10); // Damage core
+                });
+
+                gameContainer.appendChild(malware);
+            }, Math.max(500, 2000 - level * 200)); // Spawn faster as level increases
+        }
+
+        function spawnPowerUps() {
+            powerUpInterval = setInterval(() => {
+                const gameContainer = document.getElementById("game-container");
+                const powerUp = document.createElement("div");
+                powerUp.classList.add("power-up");
+
+                // Randomize position
+                const randomLeft = Math.random() * (gameContainer.offsetWidth - 40);
+                powerUp.style.left = `${randomLeft}px`;
+                powerUp.style.animationDuration = "6s";
+
+                // Add click event to collect power-up
+                powerUp.onclick = () => {
+                    document.getElementById("powerup-sound").play();
+                    score += 20; // Bonus points
+                    updateScore();
+                    powerUp.remove();
+                };
+
+                // Remove power-up if it reaches the core
+                powerUp.addEventListener("animationend", () => {
+                    powerUp.remove();
+                });
+
+                gameContainer.appendChild(powerUp);
+            }, 10000); // Spawn power-ups every 10 seconds
+        }
+
+        function updateScore() {
+            document.getElementById("score").textContent = `Score: ${score}`;
+            if (score >= level * 100) {
+                level++;
+                document.getElementById("level").textContent = `Level: ${level}`;
+            }
+        }
+
+        function updateHealth(damage) {
+            coreHealth -= damage;
+            const healthBar = document.getElementById("health-bar");
+            healthBar.style.width = `${coreHealth}%`;
+            if (coreHealth <= 0) {
+                endGame();
+            }
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").textContent = `Time left: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    clearInterval(malwareInterval);
+                    clearInterval(powerUpInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            alert(`Game Over! Your final score is ${score}.`);
+            document.getElementById("game-container").innerHTML = `
+                <h2>Game Over!</h2>
+                <p>Your final score: ${score}</p>
+                <p>Level Reached: ${level}</p>
+            `;
+        }
+
+        // Start the game
+        startGame();
+    </script>
+</body>
+</html>
